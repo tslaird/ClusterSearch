@@ -5,12 +5,13 @@ import glob
 import os
 import psutil
 import pandas as pd
+import itertools
 
-def gbff2protein(gbff_file):
+def gbff2protein(gbff_file ,output_directory='fasta_files'):
     outname = [re.sub('.gbk|.gbff','_proteins.fa', gbff_file)]
     outname = ''.join(outname).split('/')[-1]
-    if os.path.exists("fasta_files/"+outname):
-        print(outname + " already converted")
+    if os.path.exists(output_directory+"/"+outname):
+        print(outname + " already converted to fasta")
     else:
         locus_re= re.compile('(?<=LOCUS\s{7})\w+')
         definition_re = re.compile('(?<=DEFINITION\s{2})[\s\S]+?(?=\nACC)')
@@ -87,37 +88,17 @@ def gbff2protein(gbff_file):
                      all_items= re.sub(' |,','_',all_items)
                      all_proteins.append(all_items)
         result= '\n'.join(all_proteins)+'\n'
-        with open("fasta_files/"+outname,'w+') as output:
+        with open(output_directory+"/"+outname,'w+') as output:
             output.writelines(result)
         print("extracted proteins for: " + gbff_file)
 
-
-number_of_cpus = psutil.cpu_count()
-print("using "+str(number_of_cpus)+" cpus")
-
-if not os.path.exists("fasta_files"):
-    os.mkdir("fasta_files")
-
-gbff_inputs = glob.glob('gbff_files_unzipped/*.gbff')
-print("Will process "+str(len(gbff_inputs))+" gbff files")
-
-with concurrent.futures.ProcessPoolExecutor(max_workers=number_of_cpus*2) as executor:
-    for _ in executor.map(gbff2protein,gbff_inputs):
-        pass
-
-fasta_files_dir=glob.glob("fasta_files/*fa")
-print(str(len(fasta_files_dir))+ " fasta files in fasta_files directory")
-
-output_names=[re.sub("gbff_files_unzipped","fasta_files",i) for i in gbff_inputs]
-output_names=[re.sub('.gbk|.gbff','_proteins.fa', i) for i in output_names]
-
-files_not_converted=list(set(output_names)-set(fasta_files_dir))
-
-if len(files_not_converted) >0:
-    print(str(len(files_not_converted))+" files were not converted")
-    print("Files not converted")
-    print(files_not_converted)
-    files_not_converted_df=pd.DataFrame(files_not_converted)
-    files_not_converted_df.to_csv("gbff_files_not_converted.txt",sep='\t', index=False, header=False)
-else:
-    print("All gbff files converted")
+def parse_gbff_parallel(n_cpus=1, input_directory="gbff_files_unzipped", output_directory="fasta_files"):
+    print("using "+str(n_cpus)+" cpus")
+    if not os.path.exists(output_directory):
+        os.mkdir(output_directory)
+    # get a list of all gbff files
+    gbff_inputs = glob.glob(input_directory+"/"+"*.gbff")
+    print("Will process "+str(len(gbff_inputs))+" gbff files")
+    with concurrent.futures.ProcessPoolExecutor(max_workers= n_cpus*2) as executor:
+        for _ in executor.map(gbff2protein,gbff_inputs, itertools.repeat(output_directory)):
+            pass
