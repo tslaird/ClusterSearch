@@ -1,0 +1,18 @@
+[project]
+name = "ClusterSearch"
+version = "0.0.1"
+authors = [
+  { name="Tyler Laird", email="tslaird@ucdavis.edu" },
+]
+description = "A package to search for gene clusters in bacterial genomes"
+readme = "README.md"
+requires-python = ">=3.7.4"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = ""
+"Bug Tracker" = ""
