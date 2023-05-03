@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import re
 import sys
 import pandas as pd
@@ -664,3 +663,8 @@ iac_positive_all_20_20.to_excel(output_directory+"iac_positive_all_data_20_20.xl
 iac_positive_all_gtdb_20_20.to_pickle(output_directory+"iac_positive_all_data_gtdb_20_20.pickle")
 iac_positive_all_gtdb_20_20.to_csv(output_directory+"iac_positive_all_data_gtdb_20_20.tsv", sep = '\t', index = False)
 iac_positive_all_gtdb_20_20.to_excel(output_directory+"iac_positive_all_data_gtdb_20_20.xlsx", index = False)
+
+
+
+
+def parse_blastp(input_blast_table="blastout.txt", output_directory = "results")

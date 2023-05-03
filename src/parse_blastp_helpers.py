@@ -11,7 +11,7 @@ import concurrent.futures
 import urllib.request
 import glob
 import os
-from sourmash import MinHash
+#from sourmash import MinHash
 import itertools
 import scipy
 from scipy import spatial
@@ -23,7 +23,7 @@ def complement(seq):
     dna_tab = str.maketrans("actg", "tgac")
     return seq.translate(dna_tab)
 
-def filter_blasttable(input_file, filter_params= None):
+def filter_blasttable(input_file, output_directory="results", filter_params= None):
     blastout = pd.read_csv(input_file, sep='\t', low_memory = False)
     print('Editing blastp output file')
     #blastout[["filename","assembly","accession","locus_tag","old_locus_tag","name","biosample","protein_name","coordinates","protein_id","pseudogene"]] = blastout['stitle'].str.split("!!", expand = True)
@@ -49,17 +49,17 @@ def filter_blasttable(input_file, filter_params= None):
         total_count = len(blastout[blastout['qseqid']== i])
         raw_blast_stats.append('Genomes with homologue to '+i+" "+str(genome_count)+"\n")
         raw_blast_stats.append('Total homologue count for '+i+" "+str(total_count)+"\n")
-    with open("raw_blast_stats.txt", 'w') as f:
+    with open(output_directory+"/"+"raw_blast_stats.txt", 'w') as f:
         f.writelines(raw_blast_stats)
     if filter_params is not None:
-        blastout_filtered = df.query(filter_params)
+        blastout_filtered = blastout.query(filter_params)
         # sample query for blast purposes
         #"qseqid == 'IacA' and bitscore >= 250 or \\
         # qseqid == 'IacB' and bitscore >= 480 or \\
         # qseqid == 'IacC' and bitscore >= 90 or \\
         # qseqid == 'IacD' and bitscore >= 140 or \\
         # qseqid == 'IacE' and bitscore >= 240"
-        blastout_filtered.to_csv('blastout_filtered.csv')
+        blastout_filtered.to_csv(output_directory+"/"+'blastout_filtered.csv')
         #print raw blast out statistics:
         filtered_blast_stats=[]
         for i in prot_names:
@@ -67,16 +67,18 @@ def filter_blasttable(input_file, filter_params= None):
             total_count = len(blastout_filtered[blastout_filtered['qseqid']== i])
             filtered_blast_stats.append('Genomes with homologue to '+i+" "+str(genome_count)+"\n")
             filtered_blast_stats.append('Total homologue count for '+i+" "+str(total_count)+"\n")
-        with open("filtered_blast_stats.txt", 'w') as f:
+        with open(output_directory+"/"+"filtered_blast_stats.txt", 'w') as f:
             f.writelines(filtered_blast_stats)
         return(blastout_filtered)
     else:
+        blastout.to_csv(output_directory+"/"+'blastout.csv')
         return(blastout)
 
 def parseblastout2(accession, blastout_dataframe, min_cluster_number=1, max_gene_dist= 10000, gene_color_dict= None):
+    list_of_clusters=[]
     print("parsing proteins from: "+ accession )
-    genome_match= blastout_filtered[blastout_filtered['accession'] ==accession]
-    prot_names=set(blastout_filtered["qseqid"])
+    genome_match= blastout_dataframe[blastout_dataframe['accession'] ==accession]
+    prot_names=set(blastout_dataframe["qseqid"])
     #if len(genome_match) > 4:
     #the following filters the genomes if they have 6 of 7 of the iacABCDEH or I
     #this filter takes into account having multiples of a hit and filters based on presence or absence
@@ -88,11 +90,11 @@ def parseblastout2(accession, blastout_dataframe, min_cluster_number=1, max_gene
         genome_match_sorted['groups']=list(np.cumsum([0] + list(1*(middle_coords_np[1:] - middle_coords_np[0:-1] >= max_gene_dist))) + 1)
         if gene_color_dict is not None:
             gene_color_dict= gene_color_dict
-        else
-            list_of_clusters = [hex(random.randrange(0, 2**24)) for c in range(0,len(prot_names))]
-            gene_color_dict = dict(zip(prot, col) for prot, col in prot_names, )
+        else:
+            list_of_colors = [hex(random.randrange(0, 2**24)) for c in range(0,len(prot_names))]
+            gene_color_dict = dict(zip(prot_names,list_of_colors ))
         for cluster_number, df in genome_match_sorted.groupby('groups'):
-            if len(df) >= 1:
+            if len(df) >= min_cluster_number:
                 hit_list = list(df['locus_tag'])
                 old_locus_hit_list = list(df['old_locus_tag'])
                 protein_name_list = list(df['protein_name'])
@@ -151,15 +153,17 @@ def parseblastout2(accession, blastout_dataframe, min_cluster_number=1, max_gene
                 list_of_clusters.append([filename, biosample, number_of_hits , cluster_len, synteny, synteny_dir_dist, synteny_dir_pident, synteny_dir_evalue, synteny_dir_bitscore, synteny_dir_score, synteny_dir_length, synteny_dir, assembly, accession, name, hit_list, old_locus_hit_list, protein_name_list, protein_id_list, pseudogene_list, query_list, coord_list, cluster_number, ncbi_graphics])
         return(list_of_clusters)
 
-def fetch_accessions(input_dataframe):
-    parse_blastp_input= list(set(blastout_filtered['accession']))
-    return()
+def fetch_accessions(input_file):
+    df=pd.read_csv(input_file)
+    parse_blastp_input= list(set(df['accession']))
+    return(parse_blastp_input)
 
 
-def parseblastout2_parallel(list_of_accessions,blastout_dataframe, n_cpus=1, max_gene_dist=10000, min_cluster_number=1, gene_color_dict=None):
+def parseblastout2_parallel(list_of_accessions,blastout_file, n_cpus=1, max_gene_dist=10000, min_cluster_number=1, gene_color_dict=None):
     result_list=[]
+    blastout_dataframe=pd.read_csv(blastout_file)
     with concurrent.futures.ProcessPoolExecutor(max_workers=n_cpus) as executor:
-        for i in executor.map(parseblastout2, list_of_accessions, itertools.repeat(blastout_dataframe), itertools.repeat(min_cluster_number), itertools.repeat(max_gene_dist), itertools.repeat(gene_color_dict):
+        for i in executor.map(parseblastout2, list_of_accessions, itertools.repeat(blastout_dataframe), itertools.repeat(min_cluster_number), itertools.repeat(max_gene_dist), itertools.repeat(gene_color_dict)):
             result_list.append(i)
             pass
     cluster_positive = list(filter(None, result_list))
@@ -167,10 +171,10 @@ def parseblastout2_parallel(list_of_accessions,blastout_dataframe, n_cpus=1, max
     cluster_positive_df= pd.DataFrame(cluster_positive_flat, columns=('filename', 'biosample', 'number_of_hits' ,'cluster_len', 'synteny', 'synteny_dir_dist', 'synteny_dir_pident', 'synteny_dir_evalue', 'synteny_dir_bitscore', 'synteny_dir_score', 'synteny_dir_length', 'synteny_dir', 'assembly', 'accession', 'name', 'hit_list', 'old_locus_hit_list', 'protein_name_list', 'protein_id_list', 'pseudogene_list', 'query_list', 'coord_list', 'cluster_number', 'ncbi_graphics'))
     #filter so that x # or more hits must be clustered together
     cluster_positive_df=cluster_positive_df[[len(set(i))>=1 for i in cluster_positive_df['synteny'].str.findall('\w')]]
-    #
     cluster_positive_df['contig'] = cluster_positive_df['name'].str.contains('supercont|ctg|node|contig|scaffold|contigs',case=False)
     cluster_positive_df['complete_genome']= cluster_positive_df['name'].str.contains('complete',case=False)
     cluster_positive_df['plasmid'] = cluster_positive_df['name'].str.contains('plasmid')
     cluster_positive_df['has_overlap'] = cluster_positive_df['synteny_dir_dist'].str.contains("--")
     cluster_positive_df['duplicated']= cluster_positive_df.duplicated(subset="filename")
+    cluster_positive_df.to_csv("results"+"/"+"cluster_hits.csv", index=False)
     return(cluster_positive_df)
