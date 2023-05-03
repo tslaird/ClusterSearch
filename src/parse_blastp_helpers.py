@@ -91,8 +91,9 @@ def parseblastout2(accession, blastout_dataframe, min_cluster_number=1, max_gene
         if gene_color_dict is not None:
             gene_color_dict= gene_color_dict
         else:
-            list_of_colors = [hex(random.randrange(0, 2**24)) for c in range(0,len(prot_names))]
+            list_of_colors = [ "#"+str(hex(random.randint(0,16777215)))[2:] for c in range(0,len(prot_names))]
             gene_color_dict = dict(zip(prot_names,list_of_colors ))
+            print(gene_color_dict)
         for cluster_number, df in genome_match_sorted.groupby('groups'):
             if len(df) >= min_cluster_number:
                 hit_list = list(df['locus_tag'])
@@ -101,6 +102,9 @@ def parseblastout2(accession, blastout_dataframe, min_cluster_number=1, max_gene
                 protein_id_list = list(df['protein_id'])
                 query_list = list(df['qseqid'])
                 coord_list = list(zip(df['start_coord'], df['end_coord'],df['direction'],df['qseqid']))
+                min_coord= min(df['start_coord'])
+                max_coord= max(df['end_coord'])
+                flip = sum(df['direction'])
                 ncbi_graphics=''
                 for i in coord_list:
                     ncbi_graphics= ncbi_graphics+ str(i[0])+':'+str(i[1])+"|"+i[3]+"|"+gene_color_dict[i[3]]+","
@@ -146,18 +150,21 @@ def parseblastout2(accession, blastout_dataframe, min_cluster_number=1, max_gene
                 name = list(set(df['name']))[0]
                 assembly= re.sub("\{|\}|\'","", str(set(df['assembly'])) )
                 accession = re.sub("\{|\}|\'","", str(set(df['accession'])) )
+                url_direction = "1" if flip < 0 else "0"
+                start_url='https://www.ncbi.nlm.nih.gov/nuccore/'+ accession + '?report=graph&tracks=[key:sequence_track,name:Sequence,display_name:Sequence,id:STD649220238,annots:Sequence,ShowLabel:false,ColorGaps:false,shown:true,order:1][key:gene_model_track,name:Genes,display_name:Genes,annots:Unnamed,Options:MergeAll,CDSProductFeats:false,NtRuler:true,AaRuler:true,HighlightMode:2,ShowLabel:true,shown:true,order:6]&assm_context='+ assembly+'&mk='
+                end_url= '&label=1&decor=1&spacing=2&v='+ str(min_coord)+':'+ str(max_coord)+'&gflip='+url_direction+'&c=000000&select=null&slim=0'
+                ncbi_graphics_url = start_url + ncbi_graphics +end_url
                 #sgi = re.sub("\{|\}|\'","", str(set(df['sgi'])) )
                 cluster_len= max(df['end_coord']) - min(df['start_coord'])
                 number_of_hits = len(df)
                 pseudogene_list= list(df['pseudogene'])
-                list_of_clusters.append([filename, biosample, number_of_hits , cluster_len, synteny, synteny_dir_dist, synteny_dir_pident, synteny_dir_evalue, synteny_dir_bitscore, synteny_dir_score, synteny_dir_length, synteny_dir, assembly, accession, name, hit_list, old_locus_hit_list, protein_name_list, protein_id_list, pseudogene_list, query_list, coord_list, cluster_number, ncbi_graphics])
+                list_of_clusters.append([filename, biosample, number_of_hits , cluster_len, synteny, synteny_dir_dist, synteny_dir_pident, synteny_dir_evalue, synteny_dir_bitscore, synteny_dir_score, synteny_dir_length, synteny_dir, assembly, accession, name, hit_list, old_locus_hit_list, protein_name_list, protein_id_list, pseudogene_list, query_list, coord_list, cluster_number, ncbi_graphics_url])
         return(list_of_clusters)
 
 def fetch_accessions(input_file):
     df=pd.read_csv(input_file)
     parse_blastp_input= list(set(df['accession']))
     return(parse_blastp_input)
-
 
 def parseblastout2_parallel(list_of_accessions,blastout_file, n_cpus=1, max_gene_dist=10000, min_cluster_number=1, gene_color_dict=None):
     result_list=[]
