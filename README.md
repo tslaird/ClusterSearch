@@ -10,5 +10,11 @@ parse_blastp_helpers.filter_blasttable("results/cluster_blast_out.txt", filter_p
 
 accs_list = parse_blastp_helpers.fetch_accessions("results/blastout.csv")
 parse_blastp_helpers.parseblastout2_parallel(accs_list,"results/blastout.csv", n_cpus=1, max_gene_dist=10000, min_cluster_number=1, gene_color_dict=None)
+# get metadata from ncbi and gtdb
+parse_blastp_helpers.fetch_metadata("results/cluster_hits.csv", ncbi_api_key="52553dfd9c090cfba1c3b28a45d8a648fd09")
+# make indexprot files
+parse_blastp_helpers.make_indexprot_parallel("results/cluster_hits.csv",fasta_file_directory= "fasta_files")
+# get gene neighborhoods
+
 
 ```
