@@ -16,6 +16,7 @@ import itertools
 import scipy
 from scipy import spatial
 import random
+import ast
 
 
 # for getting complementary DNA sequence
@@ -374,15 +375,14 @@ def make_indexprot_parallel(cluster_positive_file, fasta_file_directory="fasta_f
         for i in executor.map(make_indexprot, inputs_indexprot, itertools.repeat(fasta_file_directory)):
             pass
 
-
-def fetch_neighborhood2(index,cluster_positive_file,features_upstream = 0,features_downstream = 0):
+def fetch_neighborhood2(index,cluster_positive_file,features_upstream=10,features_downstream=10):
     cluster_positive_df=pd.read_csv(cluster_positive_file)
     cluster = cluster_positive_df.iloc[index,:]
     acc= cluster['accession']
     assembly = re.sub('.gbff','_proteins.fa.indexprot', cluster['filename'])
     #make the genome database from the .fa.index file
     assembly_index_file ='index_files/'+assembly
-    print(assembly_index_file)
+    print(assembly_index_file+ " being accessed")
     db = pd.read_csv(assembly_index_file, sep = "!!" ,header = None, engine='python')
     #db.columns = ["filename","assembly","accession","locus_tag","old_locus_tag","name","biosample","protein_name","coordinates","protein_id"]
     db.columns = ["filename","assembly","accession","locus_tag","old_locus_tag","name","biosample","protein_name","coordinates","protein_id","pseudogene","protein_seq"]
@@ -393,9 +393,9 @@ def fetch_neighborhood2(index,cluster_positive_file,features_upstream = 0,featur
     db['end_coord'] = [re.search('(?<=\.(\.|\>))\d+',str(c)).group(0) for c in db['coordinates'] ]
     db['end_coord'] = [re.sub('>|<|\)|\(',"",c) for c in db['end_coord'] ]
     db['end_coord'] = db['end_coord'].astype(int)
-    hit_list = cluster['hit_list']
-    query_list = cluster['query_list']
-    cluster_number = cluster['cluster_number']
+    hit_list = ast.literal_eval(cluster['hit_list'])
+    query_list = ast.literal_eval(cluster['query_list'])
+    cluster_number = ast.literal_eval(str(cluster['cluster_number']))
     hit_dict = dict(zip(hit_list,query_list))
     genome = db.loc[db['accession'] == acc].copy()
     start = genome[genome['locus_tag'] == hit_list[0]].index.values.astype(int)[0] - features_upstream
@@ -480,16 +480,16 @@ def fetch_neighborhood2(index,cluster_positive_file,features_upstream = 0,featur
         tared_adj_coord_list = list(zip([v - tare_value for v in neighborhood['start_coord']], [v - tare_value for v in neighborhood['end_coord']],neighborhood['direction'],neighborhood['query_match']))
     # making an ITOL compatible string
     #gene_color_dict={ 'IacA':'#ff5969',
-                        'IacB':'#2db34e',
-                        'IacC':'#fb77e0',
-                        'IacD':'#00bc7e',
-                        'IacE':'#8d006e',
-                        'IacF':'#cfdd63',
-                        'IacG':'#0060d0',
-                        'IacR':'#bb7b00',
-                        'IacH':'#7c2c29',
-                        'IacI':'#f1d17a',
-                        'x':'#d1d1d1'}
+    #                    'IacB':'#2db34e',
+                        # 'IacC':'#fb77e0',
+                        # 'IacD':'#00bc7e',
+                        # 'IacE':'#8d006e',
+                        # 'IacF':'#cfdd63',
+                        # 'IacG':'#0060d0',
+                        # 'IacR':'#bb7b00',
+                        # 'IacH':'#7c2c29',
+                        # 'IacI':'#f1d17a',
+                        # 'x':'#d1d1d1'}
     #max_len = tared_adj_coord_list[-1][1]
     #itol_diagram=[]
     #for g in tared_adj_coord_list:
@@ -550,14 +550,20 @@ def fetch_neighborhood2(index,cluster_positive_file,features_upstream = 0,featur
     return([accession, assembly, title, len(neighborhood), cluster_len, synteny,synteny_alphabet, synteny_dir_dist, synteny_dir, cluster_number,coord_list,adj_coord_list,tared_adj_coord_list, nhbrhood_hit_list,nhbrhood_locus_tags,nhbrhood_old_locus_tags,nhbrhood_prot_ids,nhbrhood_prot_name,nhbrhood_prot_seq, clusterGC, genomeGC,diffGC, four_mer_freq_cluster,four_mer_freq_genome, four_mer_distance, cluster_seq])
 
 
-def helper_fetchneighborhood2(index):
-    return fetchneighborhood2(index,features_upstream = 0,features_downstream = 0)
-#
-def fetch_neighborhood_parallel():
+
+def fetch_neighborhood_parallel(cluster_positive_file,features_upstream = 10,features_downstream = 10, output_directory='results',output_filename="cluster_positive_neighborhoods.tsv"):
+    cluster_positive_df=pd.read_csv(cluster_positive_file)
     fetchneighborhood_columns=['accession','assembly', 'title', 'feature_count_nhbr', 'cluster_len_nhbr', 'synteny_nhbr','synteny_alphabet_nhbr', 'synteny_dir_dist_nhbr', 'synteny_dir_nhbr','cluster_number','coord_list','adj_coord_list','tared_adj_coord_list', 'nhbrhood_hit_list','nhbrhood_locus_tags','nhbrhood_old_locus_tags','nhbrhood_prot_ids','nhbrhood_prot_name','nhbrhood_prot_seq', 'clusterGC','genomeGC','diffGC','four_mer_freq_cluster','four_mer_freq_genome','four_mer_distance','cluster_seq']
-    inputs_fetchneighborhood = list(range(0,len(iac_positive_df)))
+    inputs_fetchneighborhood = list(range(0,len(cluster_positive_df)))
+    #print(inputs_fetchneighborhood)
     outputs_fetchneighborhood=[]
     with concurrent.futures.ProcessPoolExecutor(max_workers=None) as executor:
-        for i in executor.map(fetchneighborhood2, inputs_fetchneighborhood):
+        for i in executor.map(fetch_neighborhood2, inputs_fetchneighborhood, itertools.repeat(cluster_positive_file), itertools.repeat(features_upstream), itertools.repeat(features_downstream) ):
             outputs_fetchneighborhood.append(i)
             pass
+    cluster_positive_neighborhoods = list(filter(None, outputs_fetchneighborhood))
+    print("Creating output file")
+    cluster_positive_neighborhoods_df= pd.DataFrame(cluster_positive_neighborhoods, columns=fetchneighborhood_columns)
+    cluster_positive_neighborhoods_df = pd.merge(cluster_positive_neighborhoods_df,cluster_positive_df, on = ["accession","cluster_number","assembly"])
+    cluster_positive_neighborhoods_df = cluster_positive_neighborhoods_df.rename(columns={"coord_list_y": "coord_list"}).drop(columns=['coord_list_x'])
+    cluster_positive_neighborhoods_df.to_csv(output_directory+"/"+output_filename,sep = '\t', index = False)
