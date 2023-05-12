@@ -96,7 +96,7 @@ parse_blastp_helpers.make_indexprot_parallel("results/cluster_hits.csv",fasta_fi
 
 Next, the neighborhoods can be obtained by parsing the index files and original gbff files. The parameters ```features_upstream``` and ```features_downstream``` determine how many gene features upstream the first gene in the cluster, and downstream of the last gene in the cluster to fetch if available. In some cases there will be a limited amount of features returned due to the cluster being located towards the end of a contig.
 ```
-parse_blastp_helpers.fetch_neighborhood_parallel("results/cluster_hits.csv", features_upstream=10,features_downstream=10)
+parse_blastp_helpers.fetch_neighborhood_parallel("results/cluster_hits.csv", features_upstream=10, features_downstream=10)
 ```
 
 The result is a large tab separated file that contains the following fields:
