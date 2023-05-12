@@ -87,14 +87,56 @@ parse_blastp_helpers.fetch_metadata("results/cluster_hits.csv", ncbi_api_key="52
 ```
 
 ### Making index files and extracting gene neighborhoods
-While the results of the parse_blastout_parallel() function identifies the query genes within each genome it does not include information on the neighboring or interspersed genes that do not match one of the query proteins. Further indexing and parsing is needed to obtain the gene neighborhoods.
+While the results of the ```parse_blastout_parallel()``` function identifies the query genes within each genome it does not include information on the neighboring or interspersed genes that do not match to one of the query proteins. Further indexing and parsing is needed to obtain the gene neighborhoods.
 
-First index files must be created
+First index files must be created using the following function:
 ```
 parse_blastp_helpers.make_indexprot_parallel("results/cluster_hits.csv",fasta_file_directory= "fasta_files")
 ```
 
-Next, the neighborhoods can be obtained by parsing the index files and original gbff files.
+Next, the neighborhoods can be obtained by parsing the index files and original gbff files. The parameters ```features_upstream``` and ```features_downstream``` determine how many gene features upstream the first gene in the cluster, and downstream of the last gene in the cluster to fetch if available. In some cases there will be a limited amount of features returned due to the cluster being located towards the end of a contig.
 ```
-parse_blastp_helpers.fetch_neighborhood_parallel("results/cluster_hits.csv")
+parse_blastp_helpers.fetch_neighborhood_parallel("results/cluster_hits.csv", features_upstream=10,features_downstream=10)
 ```
+
+The result is a large tab separated file that contains the following fields:
+
+accession	assembly	title	feature_count_nhbr	cluster_len_nhbr	synteny_nhbr	synteny_alphabet_nhbr	synteny_dir_dist_nhbr	synteny_dir_nhbr	cluster_number	adj_coord_list	tared_adj_coord_list	nhbrhood_hit_list	nhbrhood_locus_tags	nhbrhood_old_locus_tags	nhbrhood_prot_ids	nhbrhood_prot_name	nhbrhood_prot_seq	clusterGC	genomeGC	diffGC	four_mer_freq_cluster	four_mer_freq_genome	four_mer_distance	cluster_seq	filename	biosample	number_of_hits	cluster_len	synteny	synteny_dir_dist	synteny_dir_pident	synteny_dir_evalue	synteny_dir_bitscore	synteny_dir_score	synteny_dir_length	synteny_dir	name	hit_list	old_locus_hit_list	protein_name_list	protein_id_list	pseudogene_list	query_list	coord_list	ncbi_graphics	contig	complete_genome	plasmid	has_overlap	duplicated	biosample_id	gi	isolation_src	env_biome	env_feature	host	host_sciname	strain	all_biosample_metadata	assembly_base	gtdb_tax	ncbi_tax	same_taxonomy	domain_gtdb	phylum_gtdb	class_gtdb	order_gtdb	family_gtdb	genus_gtdb	species_gtdb
+
+
+| Fields  | Description |
+| ------- | -------- |
+| accession   | 1  |
+| assembly   | 2  |
+| feature_count_nhbr   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
+| title   | 3  |
