@@ -101,42 +101,69 @@ parse_blastp_helpers.fetch_neighborhood_parallel("results/cluster_hits.csv", fea
 
 The result is a large tab separated file that contains the following fields:
 
-accession	assembly	title	feature_count_nhbr	cluster_len_nhbr	synteny_nhbr	synteny_alphabet_nhbr	synteny_dir_dist_nhbr	synteny_dir_nhbr	cluster_number	adj_coord_list	tared_adj_coord_list	nhbrhood_hit_list	nhbrhood_locus_tags	nhbrhood_old_locus_tags	nhbrhood_prot_ids	nhbrhood_prot_name	nhbrhood_prot_seq	clusterGC	genomeGC	diffGC	four_mer_freq_cluster	four_mer_freq_genome	four_mer_distance	cluster_seq	filename	biosample	number_of_hits	cluster_len	synteny	synteny_dir_dist	synteny_dir_pident	synteny_dir_evalue	synteny_dir_bitscore	synteny_dir_score	synteny_dir_length	synteny_dir	name	hit_list	old_locus_hit_list	protein_name_list	protein_id_list	pseudogene_list	query_list	coord_list	ncbi_graphics	contig	complete_genome	plasmid	has_overlap	duplicated	biosample_id	gi	isolation_src	env_biome	env_feature	host	host_sciname	strain	all_biosample_metadata	assembly_base	gtdb_tax	ncbi_tax	same_taxonomy	domain_gtdb	phylum_gtdb	class_gtdb	order_gtdb	family_gtdb	genus_gtdb	species_gtdb
-
-
 | Fields  | Description |
-| ------- | -------- |
-| accession   | 1  |
-| assembly   | 2  |
-| feature_count_nhbr   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
-| title   | 3  |
+| ------------- | -------------------------------------------------------- |
+| accession | the accession number of the contig containing the cluster |
+| assembly | the name of the RefSeq genome assembly the cluster is found in (e.g. "GCF_XXXXXXX.X) |
+| title | the name of the contig containing the cluster |
+| feature_count_nhbr | a count of genomic features in the cluster neighborhood |
+| cluster_len_nhbr | the length in nucleotides of the cluster neighborhood |
+| synteny_nhbr | text rendering of the cluster in the format GeneA-GeneB-x-GeneC (x represents genes not matching to query proteins)|
+| synteny_alphabet_nhbr | text rendering of the cluster in the format GENEAgeneBGENEC (uppercase represents forward direction, lowercase represents reverse direction) |
+| synteny_dir_dist_nhbr | text rendering of the cluster in the format \| A 〉-39-\| B 〉-77-〈 x \| -20-\| C 〉where the interspersed values are the distance between genes |
+| synteny_dir_nhbr | text rendering of the cluster in the format \| A 〉\| B 〉〈 x \|\| C 〉 |
+| cluster_number | a unique identifier for the cluster if there are multiple clusters on a particular genome or contig |
+| adj_coord_list | the coordinate list of the cluster genes (start, stop, direction [1=fwd or -1 = reverse], query hit name) in the format of a python list of tuples adjusted so that a majority of genes are in the forward direction |
+| tared_adj_coord_list | similar to the adj_coord_list but with the coordinates edited to start at 0 |
+| nhbrhood_hit_list | a list of the hits matching the query proteins (hits not matching any query protein identified as "x")|
+| nhbrhood_locus_tags | a list of RefSeq locus tags from proteins in the cluster neighborhood |
+| nhbrhood_old_locus_tags | a list of RefSeq old locus tags from proteins in the cluster neighborhood |
+| nhbrhood_prot_ids | a list of protein ids from proteins in the cluster neighborhood |
+| nhbrhood_prot_name | a list of protein names from proteins in the cluster neighborhood |
+| nhbrhood_prot_seq | a list of protein sequences from proteins in the cluster neighborhood (newline characters in the sequence were replaced with two question mark characters "??")|
+| clusterGC | the GC content of the cluster |
+| genomeGC | the GC content of the entire genome |
+| diffGC | the difference in GC content between the cluster and entire genome |
+| cluster_seq | the DNA sequence of the cluster |
+| genome_acc |
+| filename | the local filename of the genome ".gbff" file |
+| biosample | the biosample id of the genome |
+| hits |
+| cluster_length |
+| synteny synteny_dir_dist |
+| synteny_dir_pident |
+| synteny_dir |
+| name |
+| hit_list | a list of the "locus tags" for a cluster parsed from the gbff file |
+| old_locus_hit_list | a list of the "old locus tags" for a cluster parsed from the gbff file |
+| protein_name_list | a list of the protein names for a cluster parsed from the gbff file
+| protein_id_list | a list of the protein ids for a cluster parsed from the gbff file |
+| pseudogene_list | a list of all the hits that are pseudogenes in the gene neghborhood |
+| query_list | the list of the hits to the query proteins |
+| coord_list | the coordinate list of the cluster genes (start, stop, direction [1=fwd or -1 = reverse], query hit name) in the format of a python list of tuples |
+| ncbi_graphics | a url link to the gene cluster overlay in the ncbi nucleotide graphics viewer |
+| contig | |
+| complete_genome | whether or not the cluster comes from a complete genome based on pattern matching with the name |
+| plasmid | whether or not the cluster is on a plasmid based on pattern matching with the name |
+| has_overlap | whether or not genes in the cluster are annotated as overlapping |
+| duplicated | whether or not the cluster appears multiple times in a genome |
+| biosample_id | |
+| gi | |
+| isolation_src | the isolation source fetched from the biosample report (if available) |
+| env_biome | the environmental biome fetched from the biosample report (if available) |
+| env_feature | the environmental feature fetched from the biosample report (if available) |
+| host | the host name fetched from the biosample report (if available) |
+| host_sciname | the host scientific name fetched from the biosample report (if available) |
+| strain | strain information fetched from the biosample report (if available) |
+| all_biosample_metadata | all the metadata fetched from the biosampple report stored as a string resembling a python list of lists|
+| assembly_base | the first component of the assembly string without the version number (example: GCF_000019125) |
+| gtdb_tax | all gtdb taxonomy category classifications according to the gtdb database file |
+| ncbi_tax | all ncbi taxonomy category classifications according to the gtdb database file |
+| same_taxonomy | whether or not the gtdb and ncbi taxonomies are the same |
+| domain_gtdb | the gtdb assigned domain |
+| phylum_gtdb | the gtdb assigned phylum |
+| class_gtdb | the gtdb assigned class |
+| order_gtdb | the gtdb assigned order |
+| family_gtdb | the gtdb assigned family |
+| genus_gtdb | the gtdb assigned genus |
+| species_gtdb | the gtdb assigned species |
