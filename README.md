@@ -124,16 +124,20 @@ The result is a large tab separated file that contains the following fields:
 | clusterGC | the GC content of the cluster |
 | genomeGC | the GC content of the entire genome |
 | diffGC | the difference in GC content between the cluster and entire genome |
+| four_mer_freq_cluster | the tetranucleotide frequency of each of 256 possible tetranucleotides within the gene cluster (organized in a list according to the python function ```[''.join(p) for p in itertools.product(['a','t','g','c'], repeat=4)``` |
+| four_mer_freq_genome | similar to four_mer_freq_cluster but of the entire genome excluding the cluster |
+| four_mer_distance | the Manhattan distance calculated by scipy.spatial.distance.cityblock(four_mer_freq_cluster,four_mer_freq_genome) |
 | cluster_seq | the DNA sequence of the cluster |
-| genome_acc |
 | filename | the local filename of the genome ".gbff" file |
 | biosample | the biosample id of the genome |
-| hits |
-| cluster_length |
-| synteny synteny_dir_dist |
-| synteny_dir_pident |
-| synteny_dir |
-| name |
+| number_of_hits | the number of unique hits to query proteins within a cluster |
+| cluster_length | the length in nucleotides from the beginning of the first gene in the cluster to the end of the last gene |
+| synteny synteny_dir_dist | similar to synteny_dir_nhbr but lacking information on hits to non query proteins |
+| synteny_dir_pident | text rendering of the cluster in the format \| A:82.0 〉\| B:99.0 〉\| C:50.0 〉where the numbers represent blast percent identity matches to the query protein |
+| synteny_dir_bitscore | text rendering of the cluster in the format \| A:450 〉\| B:200 〉\| C:490 〉where the numbers represent blast bitscore values to the query protein |
+| synteny_dir_length | text rendering of the cluster in the format \| A:230 〉\| B:120 〉\| C:320 〉where the numbers represent the length of the gene |
+| synteny_dir | similar to synteny_dir_nhbr but lacking information on hits to non query proteins |
+| name | duplicate of title |
 | hit_list | a list of the "locus tags" for a cluster parsed from the gbff file |
 | old_locus_hit_list | a list of the "old locus tags" for a cluster parsed from the gbff file |
 | protein_name_list | a list of the protein names for a cluster parsed from the gbff file
@@ -147,8 +151,8 @@ The result is a large tab separated file that contains the following fields:
 | plasmid | whether or not the cluster is on a plasmid based on pattern matching with the name |
 | has_overlap | whether or not genes in the cluster are annotated as overlapping |
 | duplicated | whether or not the cluster appears multiple times in a genome |
-| biosample_id | |
-| gi | |
+| biosample_id | ncbi biosample id |
+| gi | ncbi gi number |
 | isolation_src | the isolation source fetched from the biosample report (if available) |
 | env_biome | the environmental biome fetched from the biosample report (if available) |
 | env_feature | the environmental feature fetched from the biosample report (if available) |
@@ -157,13 +161,13 @@ The result is a large tab separated file that contains the following fields:
 | strain | strain information fetched from the biosample report (if available) |
 | all_biosample_metadata | all the metadata fetched from the biosampple report stored as a string resembling a python list of lists|
 | assembly_base | the first component of the assembly string without the version number (example: GCF_000019125) |
-| gtdb_tax | all gtdb taxonomy category classifications according to the gtdb database file |
-| ncbi_tax | all ncbi taxonomy category classifications according to the gtdb database file |
+| gtdb_tax | all gtdb taxonomy category classifications according to the gtdb database file (if available) |
+| ncbi_tax | all ncbi taxonomy category classifications according to the gtdb database file (if available) |
 | same_taxonomy | whether or not the gtdb and ncbi taxonomies are the same |
-| domain_gtdb | the gtdb assigned domain |
-| phylum_gtdb | the gtdb assigned phylum |
-| class_gtdb | the gtdb assigned class |
-| order_gtdb | the gtdb assigned order |
-| family_gtdb | the gtdb assigned family |
-| genus_gtdb | the gtdb assigned genus |
-| species_gtdb | the gtdb assigned species |
+| domain_gtdb | the gtdb assigned domain (if available) |
+| phylum_gtdb | the gtdb assigned phylum (if available) |
+| class_gtdb | the gtdb assigned class (if available) |
+| order_gtdb | the gtdb assigned order (if available) |
+| family_gtdb | the gtdb assigned family (if available) |
+| genus_gtdb | the gtdb assigned genus (if available) |
+| species_gtdb | the gtdb assigned species (if available) |
