@@ -146,9 +146,9 @@ The result is a large tab separated file that contains the following fields:
 | query_list | the list of the hits to the query proteins |
 | coord_list | the coordinate list of the cluster genes (start, stop, direction [1=fwd or -1 = reverse], query hit name) in the format of a python list of tuples |
 | ncbi_graphics | a url link to the gene cluster overlay in the ncbi nucleotide graphics viewer |
-| contig | |
-| complete_genome | whether or not the cluster comes from a complete genome based on pattern matching with the name |
-| plasmid | whether or not the cluster is on a plasmid based on pattern matching with the name |
+| contig | whether or not the cluster resides on a contig (not on a complete genome) (based on pattern matching with the name field) |
+| complete_genome | whether or not the cluster comes from a complete genome (based on pattern matching with the name field) |
+| plasmid | whether or not the cluster is on a plasmid (based on pattern matching with the name field) |
 | has_overlap | whether or not genes in the cluster are annotated as overlapping |
 | duplicated | whether or not the cluster appears multiple times in a genome |
 | biosample_id | ncbi biosample id |
@@ -171,3 +171,18 @@ The result is a large tab separated file that contains the following fields:
 | family_gtdb | the gtdb assigned family (if available) |
 | genus_gtdb | the gtdb assigned genus (if available) |
 | species_gtdb | the gtdb assigned species (if available) |
+
+
+### Downstream analysis
+
+Often times you may want to do phylogenomic comparisons between certain genes within each gene cluster.
+In order to better facilitate downstream comparisons you can use the function ```extract_cluster_prot```
+
+
+For example to fetch the PaaA protein sequences from the analysis you could run:
+
+```
+extract_cluster_prot(hit_name="PaaA", neighborhood_file="results/cluster_positive_neighborhoods.tsv", outfile_name = "resulst/PaaA_hits.fa", additional_fields=['assembly','accession','title'], filter_params=None)
+```
+
+You could add additional info to each resulting fasta header by adding another one of the column names (such as species_gtdb or synteny) to the ```additional_fields``` list. Furthermore if you would like to subset the data to only include certain entries you can input a query string for the ```filter_params``` parameter which will subset the dataframe constructed from the neighborood_file.

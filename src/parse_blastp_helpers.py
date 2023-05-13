@@ -567,3 +567,37 @@ def fetch_neighborhood_parallel(cluster_positive_file,features_upstream = 10,fea
     cluster_positive_neighborhoods_df = pd.merge(cluster_positive_neighborhoods_df,cluster_positive_df, on = ["accession","cluster_number","assembly"])
     cluster_positive_neighborhoods_df = cluster_positive_neighborhoods_df.rename(columns={"coord_list_y": "coord_list"}).drop(columns=['coord_list_x'])
     cluster_positive_neighborhoods_df.to_csv(output_directory+"/"+output_filename,sep = '\t', index = False)
+
+def extract_cluster_prot(hit_name, neighborhood_file, outfile_name, additional_fields=['assembly','accession','title'], filter_params=None):
+    df=pd.read_csv(neighborhood_file, sep ='\t')
+    if filter_params is not None:
+        df= df.query(filter_params)
+    protein_seqs=[]
+    protein_info=[]
+    for i in range(len(df['accession'])):
+        #get index of query gene matching IacA
+        indices = [i for i, x in enumerate(ast.literal_eval(df['nhbrhood_hit_list'].iloc[i])) if x == hit_name]
+        #index = ast.literal_eval(tree_df['query_list'].iloc[i]).index("IacA")
+        for n in range(len(indices)):
+            index = indices[n]
+            protein_seqs.append(ast.literal_eval( re.sub('nan',"'absent'",df['nhbrhood_prot_seq'].iloc[i]))[index])
+            #protein_info.append(df_filtered['assembly'].iloc[i]+"_"+ast.literal_eval(df_filtered['nhbrhood_hit_list'].iloc[i])[index]+"_n"+str(n+1)+"_"+str(df_filtered['species_gtdb'].iloc[i])+"_"+str(df_filtered['title'].iloc[i])+"_"+ast.literal_eval(re.sub('nan',"'absent'",df_filtered['nhbrhood_locus_tags'].iloc[i]))[index]+"_"+ast.literal_eval(re.sub('nan',"'absent'",df_filtered['nhbrhood_prot_ids'].iloc[i]))[index]+"_"+str(df_filtered['synteny_alphabet_nhbr'].iloc[i]))
+            header_string= "_".join([df[field].iloc[i] for field in additional_fields ])
+            if header_string in protein_info:
+                header_string = header_string+"_duplicate"
+            protein_info.append(header_string)
+    protein_seqs=[re.sub('\?\?','\n',i) for i in protein_seqs]
+    protein_info=[">"+re.sub(' ','_',i) for i in protein_info]
+    protein_info=[re.sub('\.','_',i) for i in protein_info]
+    protein_info=[re.sub('_+','_',i) for i in protein_info]
+    protein_info=[re.sub('[^0-9a-zA-Z\>\n]+',"_",i) for i in protein_info]
+    fasta_out=''
+    for i,j in zip(protein_info,protein_seqs):
+        # if re.search('IacA_n1_s__Sphingomonas',i):
+        #         pass
+        # else:
+        #     fasta_out+=i+'\n'+j+'\n\n'
+        fasta_out+=i+'\n'+j+'\n\n'
+    outfile_text=prot+"_seqs.fa"
+    with open(outfile_name,'w+') as output:
+        output.writelines(fasta_out)
