@@ -24,7 +24,6 @@ dependencies = [
   "io",
   "xml.etree.ElementTree",
   "numpy",
-  "concurrent.futures",
   "urllib.request",
   "scipy",
   "psutil"
