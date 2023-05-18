@@ -20,7 +20,7 @@ classifiers = [
 dependencies = [
   "pandas",
   "pandas",
-  "pycurl"
+  "pycurl",
   "io",
   "xml.etree.ElementTree",
   "numpy",
