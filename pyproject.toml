@@ -24,7 +24,7 @@ dependencies = [
   "numpy",
   "scipy",
   "psutil",
-  "ncbi-blast+;"
+  "'ncbi-blast+'"
 ]
 
 [project.urls]
