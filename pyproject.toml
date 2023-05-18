@@ -23,7 +23,8 @@ dependencies = [
   "pycurl",
   "numpy",
   "scipy",
-  "psutil"
+  "psutil",
+  "ncbi-blast+"
 ]
 
 [project.urls]
