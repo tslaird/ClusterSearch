@@ -21,9 +21,8 @@ dependencies = [
   "pandas",
   "pandas",
   "pycurl",
-  "xml.etree.ElementTree",
+  "xml",
   "numpy",
-  "urllib.request",
   "scipy",
   "psutil"
 ]
