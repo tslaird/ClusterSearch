@@ -21,7 +21,6 @@ dependencies = [
   "pandas",
   "pandas",
   "pycurl",
-  "xml",
   "numpy",
   "scipy",
   "psutil"
