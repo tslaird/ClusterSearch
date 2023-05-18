@@ -6,9 +6,17 @@ This package can be installed directly from github within a conda environment us
 conda create -n ClusterSearch
 conda activate ClusterSearch
 conda install git pip
-pip install git+
+pip install git+https://github.com/tslaird/ClusterSearch.git
 ```
-Once installed you can run the following workflow below (modified as needed)
+ClusterSearch also relies on the BLAST software.
+The blast executables can be downloaded from (https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)
+or installed with conda using the following command:
+```
+conda install -c bioconda blast
+
+```
+
+Once blast is installed you can run the following workflow (modified as needed)
 
 # Sample workflow:
 
@@ -78,7 +86,7 @@ For example to filter the table to only include hits for PaaA that have a bitsco
 ```
 parse_blastp_helpers.filter_blasttable("results/cluster_blast_out.txt", filter_params="qseqid == 'PaaA' and bitscore >= 250 or qseqid == 'PaaB' and bitscore >= 200")
 ```
-Any of the columns of the blast output file can be filtered in a similar manner
+Any of the columns of the blast output file can be filtered in a similar manner.
 
 ### Parsing the filtered tabular blast output to identify gene clusters
 
