@@ -375,7 +375,7 @@ def make_indexprot_parallel(cluster_positive_file, fasta_file_directory="fasta_f
         for i in executor.map(make_indexprot, inputs_indexprot, itertools.repeat(fasta_file_directory)):
             pass
 
-def fetch_neighborhood2(index,cluster_positive_file,features_upstream=10,features_downstream=10):
+def fetch_neighborhood2(index,cluster_positive_file,features_upstream=5,features_downstream=5, gene_prefix=None, non_query_id="x"):
     cluster_positive_df=pd.read_csv(cluster_positive_file)
     cluster = cluster_positive_df.iloc[index,:]
     acc= cluster['accession']
@@ -461,7 +461,7 @@ def fetch_neighborhood2(index,cluster_positive_file,features_upstream=10,feature
             neighborhood['end_coord']= neighborhood['actual_start_tmp']* -1
             neighborhood['direction'] = neighborhood['direction'] *-1
             neighborhood = neighborhood.sort_values(by='start_coord')
-    neighborhood['query_match'] = neighborhood['query_match'].replace(np.nan,"x")
+    neighborhood['query_match'] = neighborhood['query_match'].replace(np.nan,non_query_id)
     nhbrhood_hit_list= list(neighborhood['query_match'])
     nhbrhood_locus_tags= list(neighborhood['locus_tag'])
     nhbrhood_old_locus_tags= list(neighborhood['old_locus_tag'])
@@ -530,17 +530,23 @@ def fetch_neighborhood2(index,cluster_positive_file,features_upstream=10,feature
     #itol_diagram_string = re.sub(',\|',',',itol_diagram_string)
     #obtains "| A 〉-23-| B 〉-23-| C 〉"
     synteny_dir_dist=''.join(sum(zip(order, dist+[0]), ())[:-1])
-    synteny_dir_dist = re.sub("Iac" ,"", synteny_dir_dist)
+    if gene_prefix is not None:
+        synteny_dir_dist = re.sub(gene_prefix,"", synteny_dir_dist)
     #obtains "| A 〉| B 〉| C 〉"
     synteny_dir =''.join(order)
-    synteny_dir = re.sub("Iac" ,"", synteny_dir)
+    if gene_prefix is not None:
+        synteny_dir = re.sub(gene_prefix ,"", synteny_dir)
     #obtains "| A:23.23 〉| B:23.23〉| C:23.23 〉"
     #synteny_dir_pident =''.join(order_pident)
     #synteny_dir_pident = re.sub("Iac" ,"", synteny_dir_pident)
     #obtains "A-B-C"
     synteny= re.sub("\n" ,"-", neighborhood['query_match'].to_string(index=False))
-    synteny= re.sub("Iac| " ,"", synteny)
-    synteny_alphabet = "".join([ gene['query_match'].replace("Iac","").upper() if gene['direction'] == 1 else gene['query_match'].replace("Iac","").lower() for index,gene in neighborhood.iterrows()  ])
+    if gene_prefix is not None:
+        synteny= re.sub(str(gene_prefix)+"| " ,"", synteny)
+    if gene_prefix is not None:
+        synteny_alphabet = "".join([ gene['query_match'].replace(gene_prefix,"").upper() if gene['direction'] == 1 else gene['query_match'].replace(gene_prefix,"").lower() for index,gene in neighborhood.iterrows()  ])
+    else:
+        synteny_alphabet = "".join([ gene['query_match'].upper() if gene['direction'] == 1 else gene['query_match'].lower() for index,gene in neighborhood.iterrows()  ])
     cluster_len= max(neighborhood['end_coord']) - min(neighborhood ['start_coord'])
     assembly= re.sub("\{|\}|\'|>","", str(set(neighborhood['assembly'])) )
     accession = re.sub("\{|\}|\'","", str(set(neighborhood['accession'])) )
@@ -551,14 +557,14 @@ def fetch_neighborhood2(index,cluster_positive_file,features_upstream=10,feature
 
 
 
-def fetch_neighborhood_parallel(cluster_positive_file,features_upstream = 10,features_downstream = 10, output_directory='results',output_filename="cluster_positive_neighborhoods.tsv"):
+def fetch_neighborhood_parallel(cluster_positive_file,features_upstream = 10,features_downstream = 10, output_directory='results',output_filename="cluster_positive_neighborhoods.tsv", gene_prefix=None, non_query_id="x", n_cpus=4):
     cluster_positive_df=pd.read_csv(cluster_positive_file)
     fetchneighborhood_columns=['accession','assembly', 'title', 'feature_count_nhbr', 'cluster_len_nhbr', 'synteny_nhbr','synteny_alphabet_nhbr', 'synteny_dir_dist_nhbr', 'synteny_dir_nhbr','cluster_number','coord_list','adj_coord_list','tared_adj_coord_list', 'nhbrhood_hit_list','nhbrhood_locus_tags','nhbrhood_old_locus_tags','nhbrhood_prot_ids','nhbrhood_prot_name','nhbrhood_prot_seq', 'clusterGC','genomeGC','diffGC','four_mer_freq_cluster','four_mer_freq_genome','four_mer_distance','cluster_seq']
     inputs_fetchneighborhood = list(range(0,len(cluster_positive_df)))
     #print(inputs_fetchneighborhood)
     outputs_fetchneighborhood=[]
-    with concurrent.futures.ProcessPoolExecutor(max_workers=None) as executor:
-        for i in executor.map(fetch_neighborhood2, inputs_fetchneighborhood, itertools.repeat(cluster_positive_file), itertools.repeat(features_upstream), itertools.repeat(features_downstream) ):
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_cpus) as executor:
+        for i in executor.map(fetch_neighborhood2, inputs_fetchneighborhood, itertools.repeat(cluster_positive_file), itertools.repeat(features_upstream), itertools.repeat(features_downstream), itertools.repeat(gene_prefix),itertools.repeat(non_query_id) ):
             outputs_fetchneighborhood.append(i)
             pass
     cluster_positive_neighborhoods = list(filter(None, outputs_fetchneighborhood))
@@ -598,6 +604,6 @@ def extract_cluster_prot(hit_name, neighborhood_file, outfile_name, additional_f
         # else:
         #     fasta_out+=i+'\n'+j+'\n\n'
         fasta_out+=i+'\n'+j+'\n\n'
-    outfile_text=prot+"_seqs.fa"
+    #outfile_text=prot+"_seqs.fa"
     with open(outfile_name,'w+') as output:
         output.writelines(fasta_out)

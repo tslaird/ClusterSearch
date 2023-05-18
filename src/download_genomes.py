@@ -9,36 +9,36 @@ import hashlib
 import os
 import gzip
 
-if os.path.exists("assembly_summary.txt"):
-    print("assembly summary already downloaded")
-else:
-    url = 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt'
-    urllib.request.urlretrieve(url,"assembly_summary.txt")
-
-if os.path.exists('assembly_summary_filtered.txt'):
-    assembly_summary_filtered= pd.read_csv("assembly_summary_filtered.txt", sep='\t')
-else:
-    assembly_summary = pd.read_csv('assembly_summary.txt', sep = '\t', low_memory = False, skiprows=[0])
-    #assembly_summary_filtered = assembly_summary[((assembly_summary['assembly_level'] == 'Complete Genome') & (assembly_summary['version_status']=='latest') & assembly_summary['organism_name'].str.contains('Pseudomonas putida'))]
-    assembly_summary_filtered = assembly_summary[(assembly_summary['version_status']=='latest')]
-    assembly_summary_filtered.to_csv("assembly_summary_filtered.txt", sep='\t')
-all_paths = assembly_summary_filtered['ftp_path']+ "/"+[i.split('/')[-1] for i in assembly_summary_filtered['ftp_path']] + \
-    "_genomic.gbff.gz"
-all_paths.to_csv("ftp_paths.txt", index=False)
-sample_names_df=pd.DataFrame([re.search("GCF_.+genomic(?=.gbff.gz)?",i.split('/')[-1])[0] for i in all_paths])
-sample_names_df.to_csv("sample_names.txt", sep='\t', index=False, header=False)
-sample_names=[re.search("GCF_.+genomic(?=.gbff.gz)?",i.split('/')[-1])[0] for i in all_paths]
-output_gbff_names= ['gbff_files/'+i.split('/')[-1] for i in all_paths]
-output_gbff_unzip_names= ['gbff_files_unzipped/'+i.split('/')[-1][0:-3] for i in all_paths]
-download_dict= dict(zip(output_gbff_names, all_paths))
+# if os.path.exists("assembly_summary.txt"):
+#     print("assembly summary already downloaded")
+# else:
+#     url = 'ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/bacteria/assembly_summary.txt'
+#     urllib.request.urlretrieve(url,"assembly_summary.txt")
+#
+# if os.path.exists('assembly_summary_filtered.txt'):
+#     assembly_summary_filtered= pd.read_csv("assembly_summary_filtered.txt", sep='\t')
+# else:
+#     assembly_summary = pd.read_csv('assembly_summary.txt', sep = '\t', low_memory = False, skiprows=[0])
+#     #assembly_summary_filtered = assembly_summary[((assembly_summary['assembly_level'] == 'Complete Genome') & (assembly_summary['version_status']=='latest') & assembly_summary['organism_name'].str.contains('Pseudomonas putida'))]
+#     assembly_summary_filtered = assembly_summary[(assembly_summary['version_status']=='latest')]
+#     assembly_summary_filtered.to_csv("assembly_summary_filtered.txt", sep='\t')
+# all_paths = assembly_summary_filtered['ftp_path']+ "/"+[i.split('/')[-1] for i in assembly_summary_filtered['ftp_path']] + \
+#     "_genomic.gbff.gz"
+# all_paths.to_csv("ftp_paths.txt", index=False)
+# sample_names_df=pd.DataFrame([re.search("GCF_.+genomic(?=.gbff.gz)?",i.split('/')[-1])[0] for i in all_paths])
+# sample_names_df.to_csv("sample_names.txt", sep='\t', index=False, header=False)
+# sample_names=[re.search("GCF_.+genomic(?=.gbff.gz)?",i.split('/')[-1])[0] for i in all_paths]
+# output_gbff_names= ['gbff_files/'+i.split('/')[-1] for i in all_paths]
+# output_gbff_unzip_names= ['gbff_files_unzipped/'+i.split('/')[-1][0:-3] for i in all_paths]
+# download_dict= dict(zip(output_gbff_names, all_paths))
 
 # chunk_size=500
 # fasta_names= ["fasta_files/"+i+"_proteins.fa" for i in sample_names]
 # fasta_file_chunks= [fasta_names[i * chunk_size:(i + 1) * chunk_size] for i in range((len(fasta_names) + chunk_size - 1) // chunk_size )]
 # combined_fasta_chunks_index=list(range(0,len(fasta_file_chunks)))
 
-number_of_cpus = psutil.cpu_count()
-print("using "+str(number_of_cpus)+" cpus")
+#number_of_cpus = psutil.cpu_count()
+#print("using "+str(number_of_cpus)+" cpus")
 
 def fetch_gbff_files(path, retries=10, unzip=True, redownload=True):
     name = 'gbff_files/'+path.split('/')[-1]
@@ -104,9 +104,7 @@ def unzip_file(name):
 
 
 
-
-
-def download_gbff_files_parallel():
+def download_gbff_files_parallel(filter_params=None, num_cpus=4):
     if os.path.exists("assembly_summary.txt"):
         print("assembly summary already downloaded")
     else:
@@ -126,6 +124,8 @@ def download_gbff_files_parallel():
         assembly_summary = pd.read_csv('assembly_summary.txt', sep = '\t', low_memory = False, skiprows=[0])
         #assembly_summary_filtered = assembly_summary[((assembly_summary['assembly_level'] == 'Complete Genome') & (assembly_summary['version_status']=='latest') & assembly_summary['organism_name'].str.contains('Pseudomonas putida'))]
         assembly_summary_filtered = assembly_summary[(assembly_summary['version_status']=='latest')]
+        if filter_params is not None:
+            assembly_summary_filtered = assembly_summary.query(filter_params)
         assembly_summary_filtered.to_csv("assembly_summary_filtered.txt", sep='\t')
     all_paths = assembly_summary_filtered['ftp_path']+ "/"+[i.split('/')[-1] for i in assembly_summary_filtered['ftp_path']] + \
         "_genomic.gbff.gz"
@@ -136,35 +136,33 @@ def download_gbff_files_parallel():
     output_gbff_names= ['gbff_files/'+i.split('/')[-1] for i in all_paths]
     output_gbff_unzip_names= ['gbff_files_unzipped/'+i.split('/')[-1][0:-3] for i in all_paths]
     download_dict= dict(zip(output_gbff_names, all_paths))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_cpus) as executor:
+        for _ in executor.map(fetch_gbff_files, all_paths):
+            pass
 
+#gbff_files_dir=glob.glob("gbff_files/*gbff.gz")
+#print(str(len(gbff_files_dir))+ " gbff.gz files in gbff_files directory")
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=number_of_cpus) as executor:
-    for _ in executor.map(fetch_gbff_files, all_paths):
-        pass
+#gbff_files_unzip_dir=glob.glob("gbff_files_unzipped/*.gbff")
+#print(str(len(gbff_files_unzip_dir))+ " gbff files in gbff_files_unzipped directory")
 
-gbff_files_dir=glob.glob("gbff_files/*gbff.gz")
-print(str(len(gbff_files_dir))+ " gbff.gz files in gbff_files directory")
+#files_not_fetched=list(set(output_gbff_names)- set(gbff_files_dir))
+#if len(files_not_fetched) >0:
+#    print(files_not_fetched)
+#    print(str(len(files_not_fetched))+" files were not fetched")
+#    paths_not_fetched=[]
+#    for i in files_not_fetched:
+#        paths_not_fetched.append(download_dict[i])
+#    print("Paths not fetched")
+#    print(paths_not_fetched)
+#    paths_not_fetched_df=pd.DataFrame(paths_not_fetched)
+#    paths_not_fetched_df.to_csv("paths_not_fetched.txt",sep='\t', index=False, header=False)
+#
+#else:
+#    print("All files fetched")
 
-gbff_files_unzip_dir=glob.glob("gbff_files_unzipped/*.gbff")
-print(str(len(gbff_files_unzip_dir))+ " gbff files in gbff_files_unzipped directory")
+#files_not_unzipped= ["gbff_files/"+i.split("/")[-1]+".gz" for i in list(set(output_gbff_unzip_names)- set(gbff_files_unzip_dir))]
 
-files_not_fetched=list(set(output_gbff_names)- set(gbff_files_dir))
-if len(files_not_fetched) >0:
-    print(files_not_fetched)
-    print(str(len(files_not_fetched))+" files were not fetched")
-    paths_not_fetched=[]
-    for i in files_not_fetched:
-        paths_not_fetched.append(download_dict[i])
-    print("Paths not fetched")
-    print(paths_not_fetched)
-    paths_not_fetched_df=pd.DataFrame(paths_not_fetched)
-    paths_not_fetched_df.to_csv("paths_not_fetched.txt",sep='\t', index=False, header=False)
-
-else:
-    print("All files fetched")
-
-files_not_unzipped= ["gbff_files/"+i.split("/")[-1]+".gz" for i in list(set(output_gbff_unzip_names)- set(gbff_files_unzip_dir))]
-
-with concurrent.futures.ThreadPoolExecutor(max_workers=number_of_cpus) as executor:
-    for _ in executor.map(fetch_gbff_files,[download_dict[i] for i in files_not_unzipped]):
-        pass
+#with concurrent.futures.ThreadPoolExecutor(max_workers=number_of_cpus) as executor:
+#    for _ in executor.map(fetch_gbff_files,[download_dict[i] for i in files_not_unzipped]):
+#        pass
