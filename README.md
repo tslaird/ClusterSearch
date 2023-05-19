@@ -18,7 +18,16 @@ conda install -c bioconda blast
 
 Once blast is installed you can run the following workflow (modified as needed) as long as you have activated the ClusterSearch conda environment and are running a python interpreter in your shell by typing and executing ```python``` in a Terminal window.
 
-# Sample workflow:
+Then you can import the different modules for each set of commands:
+```
+from ClusterSearch import download_genomes
+from ClusterSearch import parse_gbff
+from ClusterSearch import make_blastdb
+from ClusterSearch import cluster_blast
+from ClusterSearch import parse_blastp
+```
+
+### Sample workflow:
 
 The following is a sample workflow that searches for the well characterized phenylacetic acid catabolic gene cluster within complete (fully assembled) **Pseudomonas putida** genomes in the RefSeq database. The commands are meant to be run in a python interpreter.
 
