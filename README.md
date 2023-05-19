@@ -36,7 +36,7 @@ The first step is to download files from RefSeq.
 This can be done manually via a web interface if desired however the ```download_gbff_files_parallel()``` function enables doing this from the command line. The function first downloads the RefSeq assembly summary file and then gets the ftp paths for each genome for subsequent download. If you are running the workflow on an HPC or with lots of storage you can certainly download all RefSeq genomes. However, the function takes a parameter ```filter_params``` which lets you subset the entire RefSeq dataset to only include geomes of interest (for example just from a particular genus or species). For the example here the filter will allow only complete genomes which contain the word "Pseudomonas putida" and that are the latest version of the genome entry. You can filter based on any column of the assembly summary file using the query syntax available in the pandas python package (see more here: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html).
 
 ```
-download_gbff_files_parallel(filter_params="assembly_level == 'Complete Genome' and organism_name.str.contains('Pseudomonas putida')")
+download_genomes.download_gbff_files_parallel(filter_params="assembly_level == 'Complete Genome' and organism_name.str.contains('Pseudomonas putida')")
 ```
 
 The files will be downloaded to a folder named ```gbff_files```
@@ -188,13 +188,13 @@ cluster_blast.cluster_blast(query_file = "Paa_operon_EcoliK-12_MG1655.fa", datab
 
 ### Editing and filtering the tabular blast output
 ```
-parse_blastp_helpers.filter_blasttable("results/cluster_blast_out.txt")
+parse_blastp.filter_blasttable("results/cluster_blast_out.txt")
 ```
 
 While the default function parses and separates certain values stored in the header, you can also filter any of the columns using a query string.
 For example to filter the table to only include hits for PaaA that have a bitscore greater than 250 and hits for PaaB greater than 200 you can use the following command:
 ```
-parse_blastp_helpers.filter_blasttable("results/cluster_blast_out.txt", filter_params="qseqid == 'PaaA' and bitscore >= 250 or qseqid == 'PaaB' and bitscore >= 200")
+parse_blastp.filter_blasttable("results/cluster_blast_out.txt", filter_params="qseqid == 'PaaA' and bitscore >= 250 or qseqid == 'PaaB' and bitscore >= 200")
 ```
 Any of the columns of the blast output file can be filtered in a similar manner.
 
@@ -202,12 +202,12 @@ Any of the columns of the blast output file can be filtered in a similar manner.
 
 First obtain all unique genome accessions to be examined for gene clusters
 ```
-accs_list = parse_blastp_helpers.fetch_accessions("results/blastout.csv")
+accs_list = parse_blastp.fetch_accessions("results/blastout.csv")
 ```
 
 Next, input those accessions to the following function:
 ```
-parse_blastp_helpers.parseblastout2_parallel(accs_list,"results/blastout.csv", n_cpus=4, max_gene_dist=10000, min_cluster_number=6, gene_color_dict=None)
+parse_blastp.parseblastout2_parallel(accs_list,"results/blastout.csv", n_cpus=4, max_gene_dist=10000, min_cluster_number=6, gene_color_dict=None)
 ```
 The ```max_gene_dist``` parameter sets a threshold of how far a gene must be away from a neighboring gene in a cluster to be excluded from that particular cluster.
 
@@ -215,7 +215,7 @@ The ```min_cluster_number``` parameter sets the minimum number of unique genes t
 
 ### Fetching metadata for the gene clusters
 ```
-parse_blastp_helpers.fetch_metadata("results/cluster_hits.csv", ncbi_api_key="52553dfd9c090cfba1c3b28a45d8a648fd09")
+parse_blastp.fetch_metadata("results/cluster_hits.csv", ncbi_api_key="52553dfd9c090cfba1c3b28a45d8a648fd09")
 ```
 
 ### Making index files and extracting gene neighborhoods
@@ -223,12 +223,12 @@ While the results of the ```parse_blastout_parallel()``` function identifies the
 
 First index files must be created using the following function:
 ```
-parse_blastp_helpers.make_indexprot_parallel("results/cluster_hits.csv",fasta_file_directory= "fasta_files")
+parse_blastp.make_indexprot_parallel("results/cluster_hits.csv",fasta_file_directory= "fasta_files")
 ```
 
 Next, the neighborhoods can be obtained by parsing the index files and original gbff files. The parameters ```features_upstream``` and ```features_downstream``` determine how many gene features upstream the first gene in the cluster, and downstream of the last gene in the cluster to fetch if available. In some cases there will be a limited amount of features returned due to the cluster being located towards the end of a contig.
 ```
-parse_blastp_helpers.fetch_neighborhood_parallel("results/cluster_hits.csv", features_upstream=10, features_downstream=10, gene_prefix="Paa")
+parse_blastp.fetch_neighborhood_parallel("results/cluster_hits.csv", features_upstream=10, features_downstream=10, gene_prefix="Paa")
 ```
 
 The result is a large tab separated file that contains the following fields:
@@ -313,7 +313,7 @@ In order to better facilitate downstream comparisons you can use the function ``
 For example to fetch the PaaA protein sequences from the analysis you could run:
 
 ```
-extract_cluster_prot(hit_name="PaaA", neighborhood_file="results/cluster_positive_neighborhoods.tsv", outfile_name = "resulst/PaaA_hits.fa", additional_fields=['assembly','accession','title'], filter_params=None)
+parse_blastp.extract_cluster_prot(hit_name="PaaA", neighborhood_file="results/cluster_positive_neighborhoods.tsv", outfile_name = "resulst/PaaA_hits.fa", additional_fields=['assembly','accession','title'], filter_params=None)
 ```
 
 You could add additional info to each resulting fasta header by adding another one of the column names (such as species_gtdb or synteny) to the ```additional_fields``` list. Furthermore if you would like to subset the data to only include certain entries you can input a query string for the ```filter_params``` parameter which will subset the dataframe constructed from the neighborood_file.
