@@ -215,7 +215,7 @@ The ```min_cluster_number``` parameter sets the minimum number of unique genes t
 
 ### Fetching metadata for the gene clusters
 ```
-parse_blastp.fetch_metadata("results/cluster_hits.csv", ncbi_api_key="52553dfd9c090cfba1c3b28a45d8a648fd09")
+parse_blastp.fetch_metadata("results/cluster_hits.csv", ncbi_api_key=<insert ncbi key here as a string>)
 ```
 
 ### Making index files and extracting gene neighborhoods
