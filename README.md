@@ -8,7 +8,7 @@ conda activate ClusterSearch
 conda install git pip
 pip install git+https://github.com/tslaird/ClusterSearch.git
 ```
-ClusterSearch also relies on the BLAST software.
+ClusterSearch relies on the BLAST software.
 The blast executables can be downloaded from (https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/)
 or installed with conda using the following command:
 ```
@@ -16,7 +16,7 @@ conda install -c bioconda blast
 
 ```
 
-Once blast is installed you can run the following workflow (modified as needed)
+Once blast is installed you can run the following workflow (modified as needed) as long as you have activated the ClusterSearch conda environment and are running a python interpreter in your shell by typing and executing ```python``` in a Terminal window.
 
 # Sample workflow:
 
@@ -24,13 +24,13 @@ The following is a sample workflow that searches for the well characterized phen
 
 ### Downloading gbff files
 The first step is to download files from RefSeq.
-This can be done manually via a web interface if desired however the ```download_gbff_files_parallel()``` function enables doing this from the command line. The function first downloads the RefSeq assembly summary file and then gets the ftp paths for each genome for subsequent download. If you are running the workflow on an HPC or with lots of storage you can certainly download all RefSeq genomes. However, the function takes a parameter ```filter_params``` which lets you subset the entire RefSeq dataset to only include geomes of interest (for example just from a particular genus or species). For the example here the filter will allow only complete genomes which contain the word "Pseudomonas putida" and that are the latest version of the genome entry. You can filter based on any column of the assembly summary file using the  
+This can be done manually via a web interface if desired however the ```download_gbff_files_parallel()``` function enables doing this from the command line. The function first downloads the RefSeq assembly summary file and then gets the ftp paths for each genome for subsequent download. If you are running the workflow on an HPC or with lots of storage you can certainly download all RefSeq genomes. However, the function takes a parameter ```filter_params``` which lets you subset the entire RefSeq dataset to only include geomes of interest (for example just from a particular genus or species). For the example here the filter will allow only complete genomes which contain the word "Pseudomonas putida" and that are the latest version of the genome entry. You can filter based on any column of the assembly summary file using the query syntax available in the pandas python package (see more here: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html).
 
 ```
 download_gbff_files_parallel(filter_params="assembly_level == 'Complete Genome' and organism_name.str.contains('Pseudomonas putida')")
 ```
 
-The files will be downloadeed to a folder named ```gbff_files```
+The files will be downloaded to a folder named ```gbff_files```
 
 The files will then be unzipped to a folder named ```gbff_unzipped_files```
 
@@ -61,19 +61,120 @@ parse_gbff.parse_gbff_parallel(n_cpus=4, input_directory="gbff_files_unzipped", 
 ```
 
 ### Constructing a blast database
-First combine the geome files:
+First combine the genome files:
 ```
 make_blastdb.combine_files_parallel(input_dir="fasta_files",output_dir="fasta_files_combined",n_cpus=1,chunk_size=5000)
 ```
-
+Then make a blast database:
 ```
 make_blastdb.make_blastdb_parallel()
 ```
 
 ### Performing a blast search of the database
 
+To search for the Paa operon, first create a file in the working directory that contains the Paa protein sequences below. These sequences were obtained from the Microbes Online database from the *Escherichia coli* K-12 MG1655 genome. Name the file: ```Paa_operon_EcoliK-12_MG1655.fa```
+
+The file text should be:
 ```
-cluster_blast.cluster_blast(query_file = "query_cluster.fa", database_file= "fasta_files_combined/fasta_files_combined_master")
+>PaaA
+MTQEERFEQRIAQETAIEPQDWMPDAYRKTLIRQIGQHAHSEIVGMLPEGNWITRAPTLR
+RKAILLAKVQDEAGHGLYLYSAAETLGCAREDIYQKMLDGRMKYSSIFNYPTLSWADIGV
+IGWLVDGAAIVNQVALCRTSYGPYARAMVKICKEESFHQRQGFEACMALAQGSEAQKQML
+QDAINRFWWPALMMFGPNDDNSPNSARSLTWKIKRFTNDELRQRFVDNTVPQVEMLGMTV
+PDPDLHFDTESGHYRFGEIDWQEFNEVINGRGICNQERLDAKRKAWEEGTWVREAALAHA
+QKQHARKVA
+>PaaB
+MSNVYWPLYEVFVRGKQGLSHRHVGSLHAADERMALENARDAYTRRSEGCSIWVVKASEI
+VASQPEERGEFFDPAESKVYRHPTFYTIPDGIEHM
+>PaaC
+MNQLTAYTLRLGDNCLVLSQRLGEWCGHAPELEIDLALANIGLDLLGQARNFLSYAAELA
+GEGDEDTLAFTRDERQFSNLLLVEQPNGNFADTIARQYFIDAWHVALFTRLMESRDPQLA
+AISAKAIKEARYHLRFSRGWLERLGNGTDVSGQKMQQAINKLWRFTAELFDADEIDIALS
+EEGIAVDPRTLRAAWEAEVFAGINEATLNVPQEQAYRTGGKKGLHTEHLGPMLAEMQYLQ
+RVLPGQQW
+>PaaD
+MGMQRLATIAPPQVHEIWALLSQIPDPEIPVLTITDLGMVRNVTQMGEGWVIGFTPTYSG
+CPATEHLIGAIREAMTTNGFTPVQVVLQLDPAWTTDWMTPDARERLREYGISPPAGHSCH
+AHLPPEVRCPRCASVHTTLISEFGSTACKALYRCDSCREPFDYFKCI
+>PaaE
+MTTFHSLTVAKVESETRDAVTITFAVPQPLQEAYRFRPGQHLTLKASFDGEELRRCYSIC
+RSYLPGEISVAVKAIEGGRFSRYAREHIRQGMTLEVMVPQGHFGYQPQAERQGRYLAIAA
+GSGITPMLAIIATTLQTEPESQFTLIYGNRTSQSMMFRQALADLKDKYPQRLQLLCIFSQ
+ETLDSDLLHGRIDGEKLQSLGASLINFRLYDEAFICGPAAMMDDAETALKALGMPDKTIH
+LERFNTPGTRVKRSVNVQSDGQKVTVRQDGRDREIVLNADDESILDAALRQGADLPYACK
+GGVCATCKCKVLRGKVAMETNYSLEPDELAAGYVLSCQALPLTSDVVVDFDAKGMA
+>PaaF
+MSELIVSRQQRVLLLTLNRPAARNALNNALLMQLVNELEAAATDTSISVCVITGNARFFA
+AGADLNEMAEKDLAATLNDTRPQLWARLQAFNKPLIAAVNGYALGAGCELALLCDVVVAG
+ENARFGLPEITLGIMPGAGGTQRLIRSVGKSLASKMVLSGESITAQQAQQAGLVSDVFPS
+DLTLEYALQLASKMARHSPLALQAAKQALRQSQEVALQAGLAQERQLFTLLAATEDRHEG
+ISAFLQKRTPDFKGR
+>PaaG
+MMEFILSHVEKGVMTLTLNRPERLNSFNDEMHAQLAECLKQVERDDTIRCLLLTGAGRGF
+CAGQDLNDRNVDPTGPAPDLGMSVERFYNPLVRRLAKLPKPVICAVNGVAAGAGATLALG
+GDIVIAARSAKFVMAFSKLGLIPDCGGTWLLPRVAGRARAMGLALLGNQLSAEQAHEWGM
+IWQVVDDETLADTAQQLARHLATQPTFGLGLIKQAINSAETNTLDTQLDLERDYQRLAGR
+SADYREGVSAFLAKRSPQFTGK
+>PaaH
+MMINVQTVAVIGSGTMGAGIAEVAASHGHQVLLYDISAEALTRAIDGIHARLNSRVTRGK
+LTAETCERTLKRLIPVTDIHALAAADLVIEAASERLEVKKALFAQLAEVCPPQTLLTTNT
+SSISITAIAAEIKNPERVAGLHFFNPAPVMKLVEVVSGLATAAEVVEQLCELTLSWGKQP
+VRCHSTPGFIVNRVARPYYSEAWRALEEQVAAPEVIDAALRDGAGFPMGPLELTDLIGQD
+VNFAVTCSVFNAFWQERRFLPSLVQQELVIGGRLGKKSGLGVYDWRAEREAVVGLEAVSD
+SFSPMKVEKKSDGVTEIDDVLLIETQGETAQALAIRLARPVVVIDKMAGKVVTIAAAAVN
+PDSATRKAIYYLQQQGKTVLQIADYPGMLIWRTVAMIINEALDALQKGVASEQDIDTAMR
+LGVNYPYGPLAWGAQLGWQRILRLLENLQHHYGEERYRPCSLLRQRALLESGYES
+>PaaI
+MSHKAWQNAHAMYENDACAKALGIDIISMDEGFAVVTMTVTAQMLNGHQSCHGGQLFSLA
+DTAFAYACNSQGLAAVASACTIDFLRPGFAGDTLTATAQVRHQGKQTGVYDIEIVNQQQK
+TVALFRGKSHRIGGTITGEA
+>PaaJ
+MREAFICDGIRTPIGRYGGALSSVRADDLAAIPLRELLVRNPRLDAECIDDVILGCANQA
+GEDNRNVARMATLLAGLPQSVSGTTINRLCGSGLDALGFAARAIKAGDGDLLIAGGVESM
+SRAPFVMGKAASAFSRQAEMFDTTIGWRFVNPLMAQQFGTDSMPETAENVAELLKISRED
+QDSFALRSQQRTAKAQSSGILAEEIVPVVLKNKKGVVTEIQHDEHLRPETTLEQLRGLKA
+PFRANGVITAGNASGVNDGAAALIIASEQMAAAQGLTPRARIVAMATAGVEPRLMGLGPV
+PATRRVLERAGLSIHDMDVIELNEAFAAQALGVLRELGLPDDAPHVNPNGGAIALGHPLG
+MSGARLALAASHELHRRNGRYALCTMCIGVGQGIAMILERV
+>PaaK
+MITNTKLDPIETASVDELQALQTQRLKWTLKHAYENVPMYRRKFDAAGVHPDDFRELSDL
+RKFPCTTKQDLRDNYPFDTFAVPMEQVVRIHASSGTTGKPTVVGYTQNDIDNWANIVARS
+LRAAGGSPKDKIHVAYGYGLFTGGLGAHYGAERLGATVIPMSGGQTEKQAQLIRDFQPDM
+IMVTPSYCLNLIEELERQLGGDASGCSLRVGVFGAEPWTQAMRKEIERRLGITALDIYGL
+SEVMGPGVAMECLETTDGPTIWEDHFYPEIVNPHDGTPLADGEHGELLFTTLTKEALPVI
+RYRTRDLTRLLPGTARTMRRMDRISGRSDDMLIIRGVNVFPSQLEEEIVKFEHLSPHYQL
+EVNRRGHLDSLSVKVELKESSLTLTHEQRCQVCHQLRHRIKSMVGISTDVMIVNCGSIPR
+SEGKACRVFDLRNIVGA
+>PaaX
+MSKLDTFIQHAVNAVPVSGTSLISSLYGDSLSHRGGEIWLGSLAALLEGLGFGERFVRTA
+LFRLNKEGWLDVSRIGRRSFYSLSDKGLRLTRRAESKIYRAEQPAWDGKWLLLLSEGLDK
+STLADVKKQLIWQGFGALAPSLMASPSQKLADVQTLLHEAGVADNVICFEAQIPLALSRA
+ALRARVEECWHLTEQNAMYETFIQSFRPLVPLLKEAADELTPERAFHIQLLLIHFYRRVV
+LKDPLLPEELLPAHWAGHTARQLCINIYQRVAPAALAFVSEKGETSVGELPAPGSLYFQR
+FGGLNIEQEALCQFIR
+>PaaY
+MPIYQIDGLTPVVPEESFVHPTAVLIGDVILGKGVYVGPNASLRGDFGRIVVKDGANIQD
+NCVMHGFPEQDTVVGEDGHIGHSAILHGCIIRRNALVGMNAVVMDGAVIGENSIVGASAF
+VKAKAEMPANYLIVGSPAKAIRELSEQELAWKKQGTHEYQVLVTRCKQTLHQVEPLREIE
+PGRKRLVFDENLRPKQ
+>PaaZ
+MQQLASFLSGTWQSGRGRSRLIHHAISGEALWEVTSEGLDMAAARQFAIEKGAPALRAMT
+FIERAAMLKAVAKHLLSEKERFYALSAQTGATRADSWVDIEGGIGTLFTYASLGSRELPD
+DTLWPEDELIPLSKEGGFAARHLLTSKSGVAVHINAFNFPCWGMLEKLAPTWLGGMPAII
+KPATATAQLTQAMVKSIVDSGLVPEGAISLICGSAGDLLDHLDSQDVVTFTGSAATGQML
+RVQPNIVAKSIPFTMEADSLNCCVLGEDVTPDQPEFALFIREVVREMTTKAGQKCTAIRR
+IIVPQALVNAVSDALVARLQKVVVGDPAQEGVKMGALVNAEQRADVQEKVNILLAAGCEI
+RLGGQADLSAAGAFFPPTLLYCPQPDETPAVHATEAFGPVATLMPAQNQRHALQLACAGG
+GSLAGTLVTADPQIARQFIADAARTHGRIQILNEESAKESTGHGSPLPQLVHGGPGRAGG
+GEELGGLRAVKHYMQRTAVQGSPTMLAAISKQWVRGAKVEEDRIHPFRKYFEELQPGDSL
+LTPRRTMTEADIVNFACLSGDHFYAHMDKIAAAESIFGERVVHGYFVLSAAAGLFVDAGV
+GPVIANYGLESLRFIEPVKPGDTIQVRLTCKRKTLKKQRSAEEKPTGVVEWAVEVFNQHQ
+TPVALYSILTLVARQHGDFVD
+```
+
+Next, blast the query file against the created database using the following command
+```
+cluster_blast.cluster_blast(query_file = "Paa_operon_EcoliK-12_MG1655.fa", database_file= "fasta_files_combined/fasta_files_combined_master")
 ```
 
 ### Editing and filtering the tabular blast output
@@ -193,7 +294,6 @@ The result is a large tab separated file that contains the following fields:
 | family_gtdb | the gtdb assigned family (if available) |
 | genus_gtdb | the gtdb assigned genus (if available) |
 | species_gtdb | the gtdb assigned species (if available) |
-
 
 ### Downstream analysis
 
