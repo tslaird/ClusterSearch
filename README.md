@@ -29,7 +29,7 @@ from ClusterSearch import parse_blastp
 
 ### Sample workflow:
 
-The following is a sample workflow that searches for the well characterized phenylacetic acid catabolic gene cluster within complete (fully assembled) **Pseudomonas putida** genomes in the RefSeq database. The commands are meant to be run in a python interpreter.
+The following is a sample workflow that searches for the well characterized phenylacetic acid catabolic gene cluster within complete (fully assembled) *Pseudomonas putida* genomes in the RefSeq database. The commands are meant to be run in a python interpreter.
 
 ### Downloading gbff files
 The first step is to download files from RefSeq.
@@ -316,4 +316,4 @@ For example to fetch the PaaA protein sequences from the analysis you could run:
 parse_blastp.extract_cluster_prot(hit_name="PaaA", neighborhood_file="results/cluster_positive_neighborhoods.tsv", outfile_name = "resulst/PaaA_hits.fa", additional_fields=['assembly','accession','title'], filter_params=None)
 ```
 
-You could add additional info to each resulting fasta header by adding another one of the column names (such as species_gtdb or synteny) to the ```additional_fields``` list. Furthermore if you would like to subset the data to only include certain entries you can input a query string for the ```filter_params``` parameter which will subset the dataframe constructed from the neighborood_file.
+You could add additional info to each resulting fasta header by adding another one of the column names (such as species_gtdb or synteny) to the ```additional_fields``` list. Furthermore if you would like to subset the data to only include certain entries you can input a query string for the ```filter_params``` parameter which will subset the dataframe constructed from the neighborhood_file.
